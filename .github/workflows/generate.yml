@@ -1,6 +1,9 @@
 name: Generate and Merge M3U Playlists
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: '0 */6 * * *' # Ejecutar cada 6 horas
 
