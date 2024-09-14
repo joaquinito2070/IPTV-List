@@ -1,0 +1,100 @@
+name: Generate and Merge M3U Playlists
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Ejecutar cada 6 horas
+
+jobs:
+  generate_and_merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Asegurar que se obtengan todos los branches
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip   
+
+          pip install requests beautifulsoup4
+
+      - name: Generate and merge M3U playlists
+        run: |
+          import requests
+          from bs4 import BeautifulSoup
+          import json
+          import subprocess
+          import os
+
+          # Obtener la lista de países desde el archivo CSV
+          with open('countries.csv', 'r') as f:
+              next(f)  # Saltar la primera línea (encabezados)
+              countries = [line.strip().split(',') for line in f]
+
+          # Descargar y procesar listas M3U para cada país
+          all_m3u_content = '#EXTM3U\n\n'
+          for country_name, country_code in countries:
+              try:
+                  # Obtener listas M3U desde JSON
+                  response = requests.get(f'https://app.megacubo.net/stats/data/country-sources.{country_code.lower()}.json')
+                  response.raise_for_status()  # Lanzar excepción si hay error 404
+                  data = response.json()
+                  m3u_urls = [item['url'] for item in data]
+
+                  for m3u_url in m3u_urls:
+                      try:
+                          m3u_content = requests.get(m3u_url).text
+                          if '#EXTM3U' in m3u_content:
+                              all_m3u_content += m3u_content + '\n\n'
+                      except:
+                          pass  # Saltar si la lista M3U no es válida
+
+              except requests.exceptions.RequestException:
+                  pass  # Saltar al siguiente país si hay un error 404
+
+          # Obtener palabras clave desde wordlists.json
+          wordlists_url = 'https://github.com/kkrypt0nn/wordlists/blob/main/wordlists.json'
+          response = requests.get(wordlists_url)
+          response.raise_for_status()
+          soup = BeautifulSoup(response.content, 'html.parser')
+          wordlist_links = [link['href'] for link in soup.find_all('a', href=True) if link['href'].startswith('/kkrypt0nn/wordlists/blob/main/')]
+
+          all_words = []
+          for wordlist_link in wordlist_links:
+              wordlist_url = f'https://github.com{wordlist_link}'
+              response = requests.get(wordlist_url)
+              response.raise_for_status()
+              wordlist_data = json.loads(response.text)
+              all_words.extend([item['word'] for item in wordlist_data])
+
+          search_query = '+'.join(all_words)
+
+          # Obtener URLs de YouTube usando yt-dlp
+          yt_command = f'docker run -it --rm jauderho/yt-dlp-nightly-builds yt-dlp -f best --extractor-args "youtube:player_client=all,-web,-web_safari" -g "https://www.youtube.com/results?search_query={search_query}&sp=EgJAAQ%253D%253D"'
+          yt_result = subprocess.run(yt_command, shell=True, capture_output=True, text=True)
+          all_m3u_content += yt_result.stdout
+
+          # Obtener URLs de Dailymotion usando yt-dlp
+          dm_command = f'docker run -it --rm jauderho/yt-dlp-nightly-builds yt-dlp -g https://www.dailymotion.com/search/{search_query}/lives'
+          dm_result = subprocess.run(dm_command, shell=True, capture_output=True, text=True)
+          all_m3u_content += dm_result.stdout
+
+          # Guardar el contenido en all.m3u
+          with open('all.m3u', 'w') as f:
+              f.write(all_m3u_content)
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add   
+ all.m3u
+          git commit -m 'Generate and merge M3U playlists'
+          git push origin main # Push al branch main
+          git push origin gh-pages # Push al branch gh-pages
