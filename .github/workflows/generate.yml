@@ -1,17 +1,6 @@
 name: Generate and Merge M3U Playlists
 
 on:
-  workflow_dispatch:
-    inputs:
-      razon:
-        description: '¿Razón?'
-        required: true
-        default: 'warning'
-        type: choice
-        options:
-          - Quiero generar tengo prisa
-          - Tengo prisa jajaja
-
   schedule:
     - cron: '0 */6 * * *' # Ejecutar cada 6 horas
 
@@ -33,7 +22,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
 
-          pip install requests beautifulsoup4
+          pip install requests beautifulsoup4 yt-dlp
 
       - name: Generate and merge M3U playlists
         run: |
@@ -87,19 +76,19 @@ jobs:
           search_query = '+'.join(all_words)
 
           # Obtener URLs de YouTube usando yt-dlp
-          yt_command = f'docker run -it --rm jauderho/yt-dlp-nightly-builds yt-dlp -f best --extractor-args "youtube:player_client=all,-web,-web_safari" -g "https://www.youtube.com/results?search_query={search_query}&sp=EgJAAQ%253D%253D"'
+          yt_command = f'yt-dlp -f best --extractor-args "youtube:player_client=all,-web,-web_safari" -g "https://www.youtube.com/results?search_query={search_query}&sp=EgJAAQ%253D%253D"'
           yt_result = subprocess.run(yt_command, shell=True, capture_output=True, text=True)
           all_m3u_content += yt_result.stdout
 
           # Obtener URLs de Dailymotion usando yt-dlp
-          dm_command = f'docker run -it --rm jauderho/yt-dlp-nightly-builds yt-dlp -g https://www.dailymotion.com/search/{search_query}/lives'
+          dm_command = f'yt-dlp -f best -g https://www.dailymotion.com/search/{search_query}/lives'
           dm_result = subprocess.run(dm_command, shell=True, capture_output=True, text=True)
 
           # Concatenar la salida de Dailymotion
           all_m3u_content += dm_result.stdout
 
           # Guardar el contenido en all.m3u
-          with open('all.m3u', 'w') as f: # Espacio agregado después de los dos puntos
+          with open('all.m3u', 'w') as f:
               f.write(all_m3u_content)
 
       - name: Commit and push changes
