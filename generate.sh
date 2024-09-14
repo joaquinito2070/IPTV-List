@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the wordlists.json URL
-WORDLISTS_URL="https://github.com/kkrypt0nn/wordlists/blob/main/wordlists.json"
+WORDLISTS_URL="https://raw.githubusercontent.com/kkrypt0nn/wordlists/main/wordlists.json"
 
 # Define the Docker container for yt-dlp
 DOCKER_CONTAINER="jauderho/yt-dlp-nightly-builds"
@@ -11,6 +11,9 @@ OUTPUT_FILE="all.m3u"
 
 # Create an empty output file
 echo "" > "$OUTPUT_FILE"
+
+# Download wordlists.json
+curl -o wordlists.json "$WORDLISTS_URL"
 
 # Loop through each country code
 while IFS=, read -r name code; do
@@ -52,10 +55,10 @@ while IFS=, read -r name code; do
   rm "$lower_code.json"
   rm "$lower_code.m3u"
 
-done < <(cat country-codes.csv)
+done < country-codes.csv
 
 # Extract all words from the wordlists.json file
-jq -r '.[] | .href' "$WORDLISTS_URL" > words.json
+jq -r '.[] | .href' wordlists.json > words.json
 
 # Download the wordlists from GitHub
 jq -r '.[] | "https://github.com/kkrypt0nn/wordlists/blob/main/" + .href' words.json > wordlists.txt
@@ -78,5 +81,6 @@ done < wordlists.txt
 # Remove the temporary words.json and wordlists.txt files
 rm words.json
 rm wordlists.txt
+rm wordlists.json
 
 echo "All M3U playlists merged into $OUTPUT_FILE"
