@@ -33,27 +33,25 @@ while IFS=, read -r name code; do
     continue
   fi
 
-  # Extract the M3U URLs from the JSON data
-  jq -r '.[] | .url' "$lower_code.json" > "$lower_code.m3u"
-
-  # Check if the M3U file was created
-  if [[ ! -f "$lower_code.m3u" ]]; then
+  # Extract the M3U URLs from the JSON data - UPDATED JQ COMMAND
+  jq -r '.[] | .url' "$lower_code.json" > "$lower_code.urls.txt"  # Store URLs in a temp file
+  
+  # Check if the URLs file was created
+  if [[ ! -f "$lower_code.urls.txt" ]]; then
     echo "Error: Could not extract M3U URLs for $code"
     rm "$lower_code.json"
     continue
   fi
 
-  # Check if the M3U file contains #EXTM3U
-  if grep -q '#EXTM3U' "$lower_code.m3u"; then
-    # Merge the M3U file into the output file
-    cat "$lower_code.m3u" >> "$OUTPUT_FILE"
-  else
-    echo "Error: M3U file for $code does not contain #EXTM3U"
-  fi
+  # Loop through the URLs and get M3U content
+  while IFS= read -r url; do
+    # Download the M3U playlist
+    curl -s "$url" >> "$OUTPUT_FILE"
+  done < "$lower_code.urls.txt"
 
-  # Remove the temporary JSON and M3U files
+  # Remove the temporary JSON and URLs files
   rm "$lower_code.json"
-  rm "$lower_code.m3u"
+  rm "$lower_code.urls.txt"
 
 done < country-codes.csv
 
