@@ -83,6 +83,8 @@ jobs:
           # Obtener URLs de Dailymotion usando yt-dlp
           dm_command = f'docker run -it --rm jauderho/yt-dlp-nightly-builds yt-dlp -g https://www.dailymotion.com/search/{search_query}/lives'
           dm_result = subprocess.run(dm_command, shell=True, capture_output=True, text=True)
+
+          # Concatenar la salida de Dailymotion
           all_m3u_content += dm_result.stdout
 
           # Guardar el contenido en all.m3u
