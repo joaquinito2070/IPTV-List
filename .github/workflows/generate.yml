@@ -85,8 +85,7 @@ jobs:
           dm_result = subprocess.run(dm_command, shell=True, capture_output=True, text=True)
 
           # Concatenar la salida de Dailymotion
-          all_m3u_content += dm_result.stdout 
-
+          all_m3u_content += dm_result.stdout
           # Guardar el contenido en all.m3u
           with open('all.m3u', 'w') as f:
               f.write(all_m3u_content)
