@@ -95,8 +95,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add   
- all.m3u
+          git add all.m3u
           git commit -m 'Generate and merge M3U playlists'
           git push origin main # Push al branch main
           git push origin gh-pages # Push al branch gh-pages
