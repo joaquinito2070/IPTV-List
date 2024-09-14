@@ -1,6 +1,17 @@
 name: Generate and Merge M3U Playlists
 
 on:
+  workflow_dispatch:
+    inputs:
+      razon:
+        description: '¿Razón?'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+          - Quiero generar tengo prisa
+          - Tengo prisa jajaja
+
   schedule:
     - cron: '0 */6 * * *' # Ejecutar cada 6 horas
 
