@@ -70,7 +70,7 @@ while IFS= read -r wordlist; do
   docker run -it --rm "$DOCKER_CONTAINER" yt-dlp -f best --extractor-args "youtube:player_client=all,-web,-web_safari" -g "https://www.youtube.com/results?search_query=$(cat wordlist.txt)&sp=EgJAAQ%253D%253D" >> "$OUTPUT_FILE"
 
   # Get Dailymotion URLs
-  docker run -it --rm "$DOCKER_CONTAINER" yt-dlp -g "https://www.dailymotion.com/search/$(cat wordlist.txt)/lives" >> "$OUTPUT_FILE"
+  docker run -it --rm "$DOCKER_CONTAINER" yt-dlp -f best -g "https://www.dailymotion.com/search/$(cat wordlist.txt)/lives" >> "$OUTPUT_FILE"
 
   # Remove the temporary wordlist file
   rm wordlist.txt
