@@ -33,9 +33,9 @@ while IFS=, read -r name code; do
     continue
   fi
 
-  # Extract the M3U URLs from the JSON data - UPDATED JQ COMMAND
-  jq -r '.[] | .url' "$lower_code.json" > "$lower_code.urls.txt"  # Store URLs in a temp file
-  
+  # Extract the M3U URLs from the JSON data 
+  jq -r '.[] | .url' "$lower_code.json" > "$lower_code.urls.txt"
+
   # Check if the URLs file was created
   if [[ ! -f "$lower_code.urls.txt" ]]; then
     echo "Error: Could not extract M3U URLs for $code"
@@ -46,6 +46,7 @@ while IFS=, read -r name code; do
   # Loop through the URLs and get M3U content
   while IFS= read -r url; do
     # Download the M3U playlist
+    echo "La lista M3U $url se descargó y se fusionará en breve..."
     curl -s "$url" >> "$OUTPUT_FILE"
   done < "$lower_code.urls.txt"
 
@@ -68,9 +69,11 @@ while IFS= read -r wordlist; do
 
   # Get YouTube URLs
   docker run -it --rm "$DOCKER_CONTAINER" yt-dlp -f best --extractor-args "youtube:player_client=all,-web,-web_safari" -g "https://www.youtube.com/results?search_query=$(cat wordlist.txt)&sp=EgJAAQ%253D%253D" >> "$OUTPUT_FILE"
+  echo "El enlace M3U se ha obtenido de YouTube con existo. Se fusionará en breve..."
 
   # Get Dailymotion URLs
   docker run -it --rm "$DOCKER_CONTAINER" yt-dlp -f best -g "https://www.dailymotion.com/search/$(cat wordlist.txt)/lives" >> "$OUTPUT_FILE"
+  echo "El enlace M3U se ha obtenido de Dailymotion con existo. Se fusionará en breve..."
 
   # Remove the temporary wordlist file
   rm wordlist.txt
