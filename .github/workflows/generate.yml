@@ -86,8 +86,9 @@ jobs:
 
           # Concatenar la salida de Dailymotion
           all_m3u_content += dm_result.stdout
+
           # Guardar el contenido en all.m3u
-          with open('all.m3u', 'w') as f:
+          with open('all.m3u', 'w') as f: # Espacio agregado después de los dos puntos
               f.write(all_m3u_content)
 
       - name: Commit and push changes
